@@ -1,0 +1,183 @@
+
+classDiagram
+direction TB
+
+class User {
+  +UUID id
+  +String full_name
+  +String email
+  +String password_hash
+  +UUID department_id
+  +Boolean is_active
+  +DateTime created_at
+}
+
+class Role {
+  +UUID id
+  +String name
+  +String description
+}
+
+class Department {
+  +UUID id
+  +String name
+  +String code
+  +UUID parent_department_id
+  +Boolean is_active
+}
+
+class Document {
+  +UUID id
+  +String tracking_reference
+  +String title
+  +String description
+  +String direction
+  +String sender
+  +String recipient
+  +String status
+  +String priority
+  +DateTime received_at
+  +DateTime due_date
+  +UUID created_by
+  +UUID current_version_id
+  +DateTime created_at
+  +DateTime updated_at
+}
+
+class DocumentVersion {
+  +UUID id
+  +UUID document_id
+  +Integer version_number
+  +String storage_key
+  +String checksum
+  +String mime_type
+  +Integer file_size
+  +UUID created_by
+  +DateTime created_at
+}
+
+class Attachment {
+  +UUID id
+  +UUID document_id
+  +String filename
+  +String storage_key
+  +String mime_type
+  +Integer file_size
+  +UUID uploaded_by
+  +DateTime uploaded_at
+}
+
+class DocumentCategory {
+  +UUID id
+  +String name
+  +String description
+  +Boolean is_active
+}
+
+class RoutingRule {
+  +UUID id
+  +String name
+  +UUID category_id
+  +UUID target_department_id
+  +String direction
+  +String priority_condition
+  +Boolean is_active
+  +Integer rule_order
+}
+
+class Assignment {
+  +UUID id
+  +UUID document_id
+  +UUID department_id
+  +UUID assigned_to
+  +UUID assigned_by
+  +String status
+  +DateTime assigned_at
+  +DateTime due_date
+  +DateTime completed_at
+}
+
+class ReviewAction {
+  +UUID id
+  +UUID document_id
+  +UUID assignment_id
+  +UUID reviewer_id
+  +String action_type
+  +String comment
+  +DateTime created_at
+}
+
+class AISuggestion {
+  +UUID id
+  +UUID document_id
+  +UUID version_id
+  +UUID proposed_category_id
+  +String proposed_priority
+  +String summary
+  +JSON keywords
+  +String model_name
+  +String status
+  +UUID reviewed_by
+  +DateTime reviewed_at
+  +DateTime created_at
+}
+
+class PDFTask {
+  +UUID id
+  +UUID document_id
+  +UUID source_version_id
+  +UUID result_version_id
+  +UUID requested_by
+  +String operation
+  +String provider
+  +String provider_task_id
+  +String status
+  +Integer retry_count
+  +String error_message
+  +DateTime created_at
+  +DateTime completed_at
+}
+
+class AuditEvent {
+  +UUID id
+  +UUID document_id
+  +UUID actor_id
+  +String event_type
+  +JSON event_data
+  +String request_id
+  +DateTime created_at
+}
+
+User "0..*" -- "0..*" Role : has
+Department "1" -- "0..*" User : contains
+Department "0..1" -- "0..*" Department : parent_of
+
+User "1" -- "0..*" Document : registers
+Document "1" *-- "1..*" DocumentVersion : versions
+Document "1" *-- "0..*" Attachment : attachments
+Document "0..*" --> "0..1" DocumentCategory : classified_as
+
+Document "1" *-- "0..*" Assignment : assignments
+Department "1" -- "0..*" Assignment : receives
+User "0..1" -- "0..*" Assignment : assigned_to
+User "1" -- "0..*" Assignment : assigned_by
+
+Assignment "1" -- "0..*" ReviewAction : review_history
+User "1" -- "0..*" ReviewAction : performs
+Document "1" -- "0..*" ReviewAction : actions
+
+Department "1" -- "0..*" RoutingRule : target
+DocumentCategory "0..1" -- "0..*" RoutingRule : condition
+
+Document "1" -- "0..*" AISuggestion : suggestions
+DocumentVersion "1" -- "0..*" AISuggestion : analyzed_version
+DocumentCategory "0..1" -- "0..*" AISuggestion : proposed_category
+User "0..1" -- "0..*" AISuggestion : reviews
+
+Document "1" -- "0..*" PDFTask : processing_tasks
+DocumentVersion "1" -- "0..*" PDFTask : source_version
+DocumentVersion "0..1" -- "0..*" PDFTask : result_version
+User "1" -- "0..*" PDFTask : requests
+
+Document "1" *-- "0..*" AuditEvent : audit_trail
+User "0..1" -- "0..*" AuditEvent : actor
